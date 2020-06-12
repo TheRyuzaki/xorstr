@@ -61,3 +61,44 @@ main:
   leave
   ret
   ```
+  
+  А это числа.
+  ```cpp
+  #ifdef _MSC_VER
+#define BS_XOR_FORCEINLINE __forceinline
+#else
+#define BS_XOR_FORCEINLINE __attribute__((always_inline))
+#endif
+
+#define xorconst(t, v) xor_const<t, v, __LINE__>().Get()
+
+template<class T, T Value, size_t Line, typename = std::enable_if_t<std::is_integral<T>::value>>
+class xor_const {
+	template <uint32_t Seed>
+	static constexpr uint32_t xor_lives_matter() noexcept {
+		uint32_t value = Seed;
+
+		for (char c : __TIME__) { value = static_cast<uint32_t>((value ^ c) * 16777619ull); }
+
+		return value;
+	}
+public:
+	BS_XOR_FORCEINLINE void _crypt_128_single(const uint64_t* keys, uint64_t* storage) noexcept {
+		_mm_store_si128(reinterpret_cast<__m128i*>(storage), _mm_xor_si128(_mm_load_si128(reinterpret_cast<const __m128i*>(storage)), _mm_load_si128(reinterpret_cast<const __m128i*>(keys))));
+	}
+
+	BS_XOR_FORCEINLINE T Get() {
+		alignas(16) constexpr uint64_t xor_key[] = { 0, xor_lives_matter<xor_lives_matter<341233234 + Line>()>() };      //SIMD prikol
+		alignas(16) constexpr uint64_t xor_res[] = { 0, Value ^ xor_lives_matter<xor_lives_matter<341233234 + Line>()>() };  //SIMD prikol2;
+
+		constexpr uint64_t xor_magic = xor_lives_matter<'seed' + Line>();
+
+		alignas(16) uint64_t result[] = { xor_magic, xor_res[1] };
+
+		_crypt_128_single(xor_key, result);
+
+		return result[1];
+	}
+};
+```
+
