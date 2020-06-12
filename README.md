@@ -1,3 +1,8 @@
+## Применять только обьявив в начале 
+```cpp
+#define JM_XORSTR_DISABLE_AVX_INTRINSICS
+```
+
 ## xorstr
 A heavily vectorized c++17 compile time string encryption.
 
